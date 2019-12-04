@@ -163,17 +163,26 @@ module Api
       fields = Array.new(DEFAULT_FIELDS)
       fields.delete(:id)
       fields.each do |field|
-        attributes[field] = params[field] if !params[field].nil?
+        attributes[field] = params[field] unless params[field].nil?
       end
+
+      params[:assignment_properties_attributes] = {} if params[:assignment_properties_attributes].nil?
+      attributes[:assignment_properties_attributes] = {} if attributes[:assignment_properties_attributes].nil?
 
       # Some attributes have to be set with default values when creating a new
       # assignment. They're based on the view's defaults.
       if request.post?
-        required_fields = { enable_test: 0,  assign_graders_to_criteria: 0,
+        required_properties = { enable_test: 0,  assign_graders_to_criteria: 0,
                             repository_folder: attributes[:short_identifier],
                             allow_web_submits: 1, group_min: 1,
-                            display_grader_names_to_students: 0,
-                            is_hidden: 0 }
+                            display_grader_names_to_students: 0 }
+        required_properties.each do |field_name, default_value|
+          if params[:assignment_properties_attributes][field_name].nil?
+            attributes[:assignment_properties_attributes][field_name] = default_value
+          end
+        end
+
+        required_fields = { is_hidden: 0, message: "" }
         required_fields.each do |field_name, default_value|
           attributes[field_name] = default_value if params[field_name].nil?
         end
